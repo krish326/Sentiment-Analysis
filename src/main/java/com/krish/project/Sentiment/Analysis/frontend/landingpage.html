@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Review Fetcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles if needed, for now Tailwind should suffice */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font as preferred */
+        }
+        /* Adding a subtle animation for the reviews section */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-gray-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
+
+<div class="bg-slate-800 shadow-2xl rounded-xl p-6 md:p-10 w-full max-w-lg transform transition-all duration-500 hover:scale-105">
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-sky-400">Product Review Analyzer 🛍️</h1>
+        <p class="text-slate-400 mt-2 text-sm md:text-base">Enter a product link below to fetch and analyze its reviews.</p>
+    </header>
+
+    <form id="reviewForm" class="space-y-6">
+        <div>
+            <label for="productLink" class="block text-sm font-medium text-slate-300 mb-1">Product Link</label>
+            <input type="url" id="productLink" name="productLink"
+                   class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-300 placeholder-slate-500"
+                   placeholder="e.g., https://www.example.com/product-page"
+                   required>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 active:bg-sky-700">
+            Fetch Reviews
+        </button>
+    </form>
+
+    <div id="reviewsResult" class="mt-8 p-4 bg-slate-700/50 border border-slate-600 rounded-lg min-h-[100px] text-slate-300 text-sm hidden">
+    </div>
+
+    <div id="loadingIndicator" class="mt-6 text-center hidden">
+        <div class="inline-flex items-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-slate-400">Fetching reviews, please wait...</span>
+        </div>
+    </div>
+
+    <div id="messageBox" class="mt-6 p-3 rounded-lg text-sm text-center hidden">
+    </div>
+
+</div>
+
+<footer class="mt-12 text-center text-xs text-slate-500">
+    <p>&copy; 2025 Review Fetcher Inc. All rights reserved.</p>
+</footer>
+
+<script>
+    // Get form and result elements
+    const reviewForm = document.getElementById('reviewForm');
+    const productLinkInput = document.getElementById('productLink');
+    const reviewsResultDiv = document.getElementById('reviewsResult');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const messageBox = document.getElementById('messageBox');
+
+    // Add event listener for form submission
+    reviewForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        const productLink = productLinkInput.value.trim();
+
+        // Clear previous results and messages
+        reviewsResultDiv.innerHTML = '';
+        reviewsResultDiv.classList.add('hidden');
+        reviewsResultDiv.classList.remove('fade-in');
+        hideMessage();
+        loadingIndicator.classList.remove('hidden');
+
+        // Basic validation (though type="url" already helps)
+        if (!productLink) {
+            showMessage('Please enter a product link.', 'error');
+            loadingIndicator.classList.add('hidden');
+            return;
+        }
+
+        try {
+            new URL(productLink); // Check if it's a valid URL format
+        } catch (_) {
+            showMessage('Please enter a valid product link (e.g., https://example.com).', 'error');
+            loadingIndicator.classList.add('hidden');
+            return;
+        }
+
+        // Simulate fetching reviews
+        // In a real application, you would make an API call here.
+        // For example: fetch(`/api/reviews?url=${encodeURIComponent(productLink)}`)
+        // .then(response => response.json())
+        // .then(data => displayReviews(data))
+        // .catch(error => showMessage('Error fetching reviews: ' + error.message, 'error'));
+
+        fetch("http://localhost:8080/api/reviews/batch", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify("Absolutely fantastic product! Exceeded my expectations.") // replace with actual review
+        })
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.classList.add('hidden');
+                reviewsResultDiv.classList.remove('hidden');
+                reviewsResultDiv.classList.add('fade-in');
+                reviewsResultDiv.innerHTML = `
+        <h2 class="text-xl font-semibold text-sky-400 mb-4">Sentiment Analysis Result</h2>
+        <p class="text-slate-300 text-sm">Sentiment: <strong class="text-green-400">${data.sentiment}</strong></p>
+    `;
+                showMessage('Sentiment analysis completed!', 'success');
+            })
+            .catch(error => {
+                loadingIndicator.classList.add('hidden');
+                showMessage('Error analyzing sentiment: ' + error.message, 'error');
+            });
+
+        console.log(`Fetching reviews for: ${productLink}`);
+
+        // Simulate a delay for fetching
+        setTimeout(() => {
+            loadingIndicator.classList.add('hidden');
+            reviewsResultDiv.classList.remove('hidden');
+            reviewsResultDiv.classList.add('fade-in');
+
+            // Mock reviews data
+            const mockReviews = [
+                { author: 'Alex P.', rating: 5, comment: 'Absolutely fantastic product! Exceeded my expectations.' },
+                { author: 'Jamie L.', rating: 4, comment: 'Very good, but could be a bit cheaper.' },
+                { author: 'Casey B.', rating: 2, comment: 'Not what I expected, had to return it.' },
+                { author: 'Morgan K.', rating: 5, comment: 'Highly recommend this to everyone! A++' }
+            ];
+
+            let reviewsHTML = `<h2 class="text-xl font-semibold text-sky-400 mb-4">Simulated Reviews for:</h2>
+                                   <p class="text-xs text-slate-400 mb-4 break-all"><em>${escapeHTML(productLink)}</em></p>
+                                   <div class="space-y-4 max-h-60 overflow-y-auto pr-2">`;
+
+            if (Math.random() > 0.2) { // Simulate successfully fetching reviews 80% of the time
+                mockReviews.forEach(review => {
+                    reviewsHTML += `
+                            <div class="p-3 bg-slate-600/70 rounded-md shadow">
+                                <div class="flex justify-between items-center mb-1">
+                                    <strong class="text-sky-300">${escapeHTML(review.author)}</strong>
+                                    <span class="text-xs font-medium text-amber-400">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+                                </div>
+                                <p class="text-slate-300 text-xs">${escapeHTML(review.comment)}</p>
+                            </div>
+                        `;
+                });
+                showMessage('Successfully fetched mock reviews!', 'success');
+            } else { // Simulate an error
+                reviewsHTML += `<p class="text-rose-400">Could not fetch reviews at this time (simulated error).</p>`;
+                showMessage('Simulated error: Could not fetch reviews.', 'error');
+            }
+
+            reviewsHTML += `</div>`;
+            reviewsResultDiv.innerHTML = reviewsHTML;
+
+        }, 2000); // Simulate 2 seconds delay
+    });
+
+    // Function to display messages (like errors or success)
+    function showMessage(message, type = 'info') {
+        messageBox.textContent = message;
+        messageBox.classList.remove('hidden', 'bg-red-500/20', 'text-red-300', 'bg-green-500/20', 'text-green-300', 'bg-sky-500/20', 'text-sky-300');
+        messageBox.classList.add('fade-in');
+
+        if (type === 'error') {
+            messageBox.classList.add('bg-red-500/20', 'text-red-300');
+        } else if (type === 'success') {
+            messageBox.classList.add('bg-green-500/20', 'text-green-300');
+        } else { // info
+            messageBox.classList.add('bg-sky-500/20', 'text-sky-300');
+        }
+    }
+
+    // Function to hide the message box
+    function hideMessage() {
+        messageBox.classList.add('hidden');
+        messageBox.classList.remove('fade-in');
+    }
+
+    // Utility function to escape HTML to prevent XSS
+    function escapeHTML(str) {
+        if (str === null || str === undefined) {
+            return '';
+        }
+        return str.toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+</script>
+
+</body>
+</html>

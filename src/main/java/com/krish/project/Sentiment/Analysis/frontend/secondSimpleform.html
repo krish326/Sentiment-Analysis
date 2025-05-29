@@ -1,0 +1,44 @@
+<textarea id="urlInput" placeholder="Paste product link..."></textarea>
+<button onclick="scrapeAndAnalyze()">Analyze Reviews</button>
+
+<div id="result"></div>
+
+<script>
+    function scrapeAndAnalyze() {
+        const url = document.getElementById("urlInput").value;
+
+        fetch("http://localhost:8080/api/scrape", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(url)
+        })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById("result");
+                resultDiv.innerHTML = ""; // Clear previous results
+
+                data.forEach((item, index) => {
+                    const reviewDiv = document.createElement("div");
+                    reviewDiv.style.border = "1px solid #ccc";
+                    reviewDiv.style.padding = "10px";
+                    reviewDiv.style.marginBottom = "10px";
+                    reviewDiv.style.borderRadius = "8px";
+
+                    reviewDiv.innerHTML = `<strong>Review ${index + 1}:</strong><br>${item.review}<br><br><strong>Aspect Sentiments:</strong><ul>`;
+
+                    for (const [aspect, sentiment] of Object.entries(item.aspects)) {
+                        reviewDiv.innerHTML += `<li><strong>${aspect}</strong>: ${sentiment}</li>`;
+                    }
+
+                    reviewDiv.innerHTML += `</ul>`;
+                    resultDiv.appendChild(reviewDiv);
+                });
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.getElementById("result").innerText = "Something went wrong 😢";
+            });
+    }
+</script>
