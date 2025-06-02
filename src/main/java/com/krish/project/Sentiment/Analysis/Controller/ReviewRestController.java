@@ -1,11 +1,15 @@
 package com.krish.project.Sentiment.Analysis.Controller;
 
+import com.krish.project.Sentiment.Analysis.Model.ReviewAnalysisResult;
 import com.krish.project.Sentiment.Analysis.Model.ReviewScraper;
 import com.krish.project.Sentiment.Analysis.Model.SentimentAnalyzer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,24 +20,13 @@ import java.util.stream.Collectors;
 public class ReviewRestController {
 
     @Autowired
-    SentimentAnalyzer sentimentAnalyzer = new SentimentAnalyzer();
-    private ReviewScraper reviewScraper = new ReviewScraper();
+    private final SentimentAnalyzer sentimentAnalyzer;
+    private final ReviewScraper reviewScraper;
 
-//    @CrossOrigin(origins = "*")
-//    @PostMapping("/review")
-//    public Map<String, String> getSentiment(@RequestBody String link) {
-//        String result = sentimentAnalyzer.analyzeAspectSentimentsSimple(link);
-//
-//        return Map.of("sentiment", result);
-//    }
-
-//    @CrossOrigin(origins = "*")
-//    @PostMapping("/batch")
-//    public List<Map<String, String>> analyzeSentiments(@RequestBody List<String> reviews) {
-//        return reviews.stream()
-//                .map(text -> Map.of("review", text, "sentiment", sentimentAnalyzer.analyzeAspectSentimentsSimple(text)))
-//                .collect(Collectors.toList());
-//    }
+    public ReviewRestController(SentimentAnalyzer sentimentAnalyzer, ReviewScraper reviewScraper){
+        this.sentimentAnalyzer = sentimentAnalyzer;
+        this.reviewScraper = reviewScraper;
+    }
 
     @CrossOrigin(origins = "*")
     @PostMapping("/aspect-review")
@@ -41,22 +34,36 @@ public class ReviewRestController {
         return sentimentAnalyzer.analyzeAspects(review);
     }
 
-    @PostMapping("/scrape")
-    public List<Map<String, Object>> analyzeLink(@RequestBody String url) throws IOException {
-        List<String> reviews = reviewScraper.scrapeReviews(url);
+    @CrossOrigin(origins = "*")
+    @GetMapping("/scrape")
+    public ResponseEntity<List<ReviewAnalysisResult>> scrapeAndAnalyze(@RequestParam String url) {
+        List<ReviewAnalysisResult> results = new ArrayList<>();
+        try {
+            System.out.println("Attempting to scrape reviews from: " + url);
+            List<String> reviews = reviewScraper.scrapeReviews(url);
 
-        System.out.println(reviews);
+            if (reviews.isEmpty()) {
+                System.out.println("No reviews scraped for: " + url);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
+            }
 
-        // Static aspect list for now
-        List<String> aspects = List.of("battery", "camera", "performance", "screen", "design");
+            for (String review : reviews) {
+                String overall = sentimentAnalyzer.getOverallSentiment(review);
+                Map<String, String> aspects = sentimentAnalyzer.analyzeAspects(review);
 
-        return reviews.stream()
-                .map(text -> {
-                    Map<String, Object> result = new HashMap<>();
-                    result.put("review", text);
-                    result.put("aspects", sentimentAnalyzer.analyzeAspectSentimentsSimple(text, aspects));
-                    return result;
-                })
-                .collect(Collectors.toList());
+                ReviewAnalysisResult analysis = new ReviewAnalysisResult();
+                analysis.setReviewText(review);
+                analysis.setOverallSentiment(overall);
+                analysis.setAspectSentiments(aspects);
+                results.add(analysis);
+            }
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            System.err.println("Error in /scrape endpoint: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
+
+
 }
