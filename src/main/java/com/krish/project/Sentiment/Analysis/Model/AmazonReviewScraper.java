@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class ReviewScraper {
+public class AmazonReviewScraper {
 
     private final WebDriver driver;
     private static final String REVIEW_CONTAINER_SELECTOR = "div.a-row.a-spacing-small.review-data";
@@ -26,7 +26,7 @@ public class ReviewScraper {
 
 
     @Autowired
-    public ReviewScraper(WebDriver driver) {
+    public AmazonReviewScraper(WebDriver driver) {
         this.driver = driver;
     }
 

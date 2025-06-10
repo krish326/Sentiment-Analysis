@@ -6,22 +6,16 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.beans.factory.annotation.Value;
-import jakarta.annotation.PreDestroy;
 
 import java.time.Duration;
 
 @Configuration
 public class SeleniumConfig {
 
-   // @Value("${webdriver.chrome.driver.path}")
-    // private String chromeDriverPath;
 
     @Bean(destroyMethod = "quit")
     @Scope("singleton") // Or "prototype" if you need a fresh instance for every scrape
     public WebDriver chromeWebDriver() {
-
-       // System.setProperty("webdriver.chrome.driver", chromeDriverPath);
 
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless");
@@ -41,12 +35,4 @@ public class SeleniumConfig {
 
         return driver;
     }
-
-//    // Ensure the WebDriver is properly closed when the application context shuts down
-//    @PreDestroy
-//    public void closeWebDriver() {
-//        WebDriver driver = chromeWebDriver(); // Get the singleton instance
-//        if (driver != null) {
-//            driver.quit();
-//        }}
 }
