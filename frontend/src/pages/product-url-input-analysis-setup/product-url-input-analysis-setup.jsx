@@ -170,7 +170,7 @@ const ProductUrlInputAnalysisSetup = () => {
     setAnalysisPhase('scraping');
     setProgress(10);
 
-    const apiUrl = `http://localhost:8080/api/scrape?url=${encodeURIComponent(url)}`;
+    const apiUrl = `/api/scrape?url=${encodeURIComponent(url)}`;
 
     try {
       console.log(`Sending request to: ${apiUrl}`);

@@ -7,11 +7,11 @@ import ContextualActionPanel from "components/ui/ContextualActionPanel";
 import ResultsNavigationBreadcrumb from "components/ui/ResultsNavigationBreadcrumb";
 
 // Page imports
-import ProductUrlInputAnalysisSetup from "pages/product-url-input-analysis-setup";
-import AnalysisResultsDashboard from "pages/analysis-results-dashboard";
-import IndividualReviewAnalysisDetail from "pages/individual-review-analysis-detail";
-import SentimentAnalyticsInsights from "pages/sentiment-analytics-insights";
-import SearchFilterManagement from "pages/search-filter-management";
+import ProductUrlInputAnalysisSetup from "pages/product-url-input-analysis-setup/product-url-input-analysis-setup";
+import AnalysisResultsDashboard from "pages/analysis-results-dashboard/analysis-result-dashboard";
+import IndividualReviewAnalysisDetail from "pages/individual-review-analysis-detail/individual-review-analysis-detail";
+import SentimentAnalyticsInsights from "pages/sentiment-analytics-insights/sentiment-analytics-management";
+import SearchFilterManagement from "pages/search-filter-management/search-filter-management";
 
 const Routes = () => {
   return (
