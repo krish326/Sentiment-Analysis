@@ -7,345 +7,207 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .line-clamp-3 {
             overflow: hidden;
             display: -webkit-box;
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 3;
         }
-        .line-clamp-none {
-            -webkit-line-clamp: unset;
-        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-gray-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
+<body class="bg-slate-900 text-gray-100 min-h-screen p-4">
 
-<div class="bg-slate-800 shadow-2xl rounded-xl p-6 md:p-10 w-full max-w-2xl transform transition-all duration-500 hover:scale-105">
+<div class="container mx-auto max-w-6xl">
     <header class="mb-8 text-center">
-        <h1 class="text-3xl md:text-4xl font-bold text-sky-400">Product Review Analyzer 🛍️</h1>
-        <p class="text-slate-400 mt-2 text-sm md:text-base">Enter a product link below to fetch and analyze its reviews.</p>
+        <h1 class="text-4xl font-bold text-sky-400">Product Review Analyzer 🛍️</h1>
+        <p class="text-slate-400 mt-2">Enter a product link to fetch, analyze, and summarize its reviews.</p>
     </header>
 
-    <form id="reviewForm" class="space-y-6">
-        <div>
-            <label for="productLink" class="block text-sm font-medium text-slate-300 mb-1">Product Link</label>
-            <input type="url" id="productLink" name="productLink"
-                   class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-300 placeholder-slate-500"
-                   placeholder="e.g., https://www.amazon.in/product-page"
-                   required>
-        </div>
-
-        <button type="submit"
-                class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 active:bg-sky-700">
-            Fetch & Analyze Reviews
-        </button>
-    </form>
-
-    <div id="loadingIndicator" class="mt-6 text-center hidden">
-        <div class="inline-flex items-center">
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span class="text-slate-400">Fetching and analyzing reviews, please wait...</span>
-        </div>
-    </div>
-
-    <div id="messageBox" class="mt-6 p-3 rounded-lg text-sm text-center hidden">
-    </div>
-
-    <div id="chartsContainer" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
-        <div class="bg-slate-700/50 border border-slate-600 rounded-lg p-4 md:p-6">
-            <h2 class="text-xl font-semibold text-sky-400 mb-4 text-center">Overall Sentiment</h2>
-            <div style="position: relative; height:250px; width:100%">
-                <canvas id="overallSentimentChart"></canvas>
+    <div class="bg-slate-800 shadow-2xl rounded-xl p-6 md:p-8 max-w-2xl mx-auto">
+        <form id="reviewForm" class="space-y-6">
+            <div>
+                <label for="productLink" class="block text-sm font-medium text-slate-300 mb-1">Product Link</label>
+                <input type="url" id="productLink" name="productLink"
+                       class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-300 placeholder-slate-500"
+                       placeholder="e.g., https://www.flipkart.com/..."
+                       required>
             </div>
+            <button type="submit" id="submitButton"
+                    class="w-full flex justify-center items-center bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 active:bg-sky-700 disabled:bg-slate-600 disabled:cursor-not-allowed">
+                <span id="buttonText">Fetch & Analyze Reviews</span>
+                <div id="loadingIndicator" class="hidden ml-2">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </button>
+        </form>
+    </div>
+
+    <div id="messageBox" class="mt-6 p-3 rounded-lg text-sm text-center hidden max-w-2xl mx-auto"></div>
+
+    <div id="resultsSection" class="mt-8 grid grid-cols-1 lg:grid-cols-5 gap-8 hidden">
+        <div id="summaryCard" class="lg:col-span-2 bg-slate-800 shadow-xl rounded-xl p-6 fade-in">
+            <h2 class="text-2xl font-bold text-amber-400 mb-4">AI-Powered Summary</h2>
+            <div id="summaryResult" class="text-slate-300 space-y-3 text-sm whitespace-pre-wrap font-mono"></div>
         </div>
-        <div class="bg-slate-700/50 border border-slate-600 rounded-lg p-4 md:p-6">
-            <h2 class="text-xl font-semibold text-sky-400 mb-4 text-center">Aspect Sentiment</h2>
-            <div style="position: relative; height:300px; width:100%">
-                <canvas id="aspectSentimentChart"></canvas>
+        <div id="detailsCard" class="lg:col-span-3 bg-slate-800 shadow-xl rounded-xl p-6 fade-in space-y-8">
+            <div id="chartsContainer" class="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
+                <div class="md:col-span-2">
+                    <h3 class="text-xl font-semibold text-sky-400 mb-4 text-center">Overall Sentiment</h3>
+                    <div class="w-full max-w-xs mx-auto"><canvas id="overallSentimentChart"></canvas></div>
+                </div>
+                <div class="md:col-span-3">
+                    <h3 class="text-xl font-semibold text-sky-400 mb-4 text-center">Aspect Sentiment</h3>
+                    <div style="position: relative; height:250px; width:100%"><canvas id="aspectSentimentChart"></canvas></div>
+                </div>
             </div>
+            <div id="reviewsResult"></div>
         </div>
     </div>
-
-    <div id="reviewsResult" class="mt-8 p-4 bg-slate-700/50 border border-slate-600 rounded-lg min-h-[100px] text-slate-300 text-sm hidden">
-    </div>
-
 </div>
-
-<footer class="mt-12 text-center text-xs text-slate-500">
-    <p>&copy; 2025 Review Analyzer. For educational purposes.</p>
-</footer>
 
 <script>
     const reviewForm = document.getElementById('reviewForm');
-    const productLinkInput = document.getElementById('productLink');
-    const reviewsResultDiv = document.getElementById('reviewsResult');
+    const submitButton = document.getElementById('submitButton');
+    const buttonText = document.getElementById('buttonText');
     const loadingIndicator = document.getElementById('loadingIndicator');
     const messageBox = document.getElementById('messageBox');
-    const chartsContainerDiv = document.getElementById('chartsContainer');
+    const resultsSection = document.getElementById('resultsSection');
+    const summaryResultDiv = document.getElementById('summaryResult');
+    const reviewsResultDiv = document.getElementById('reviewsResult');
 
-    let overallSentimentChartInstance = null;
-    let aspectSentimentChartInstance = null;
+    let overallChart, aspectChart;
 
     reviewForm.addEventListener('submit', function(event) {
-        console.log("Fetch Reviews button clicked - event listener started.");
         event.preventDefault();
+        const productLink = document.getElementById('productLink').value.trim();
+        if (!productLink) { showMessage('Please enter a product link.', 'error'); return; }
 
-        const productLink = productLinkInput.value.trim();
-
-        // Clear previous results
-        reviewsResultDiv.innerHTML = '';
-        reviewsResultDiv.classList.add('hidden');
-        if (chartsContainerDiv) {
-            chartsContainerDiv.classList.add('hidden');
-        }
-        if (overallSentimentChartInstance) {
-            overallSentimentChartInstance.destroy();
-            overallSentimentChartInstance = null;
-        }
-        if (aspectSentimentChartInstance) {
-            aspectSentimentChartInstance.destroy();
-            aspectSentimentChartInstance = null;
-        }
-        hideMessage();
+        showMessage('', 'info', true);
+        resultsSection.classList.add('hidden');
+        buttonText.textContent = 'Fetching & Analyzing...';
         loadingIndicator.classList.remove('hidden');
-
-        if (!productLink) {
-            showMessage('Please enter a product link.', 'error');
-            loadingIndicator.classList.add('hidden');
-            return;
-        }
-        try {
-            new URL(productLink);
-        } catch (_) {
-            showMessage('Please enter a valid product link (e.g., https://example.com).', 'error');
-            loadingIndicator.classList.add('hidden');
-            return;
-        }
+        submitButton.disabled = true;
+        if(overallChart) overallChart.destroy();
+        if(aspectChart) aspectChart.destroy();
 
         const apiUrl = `http://localhost:8080/api/scrape?url=${encodeURIComponent(productLink)}`;
-        console.log("Fetching from API URL:", apiUrl);
-
-        fetch(apiUrl, { method: "GET" })
+        fetch(apiUrl)
             .then(response => {
-                console.log("Received response:", response);
-                if (!response.ok) {
-                    return response.json().then(errData => {
-                        console.error("API Error Data:", errData);
-                        throw new Error(errData.message || `HTTP error! status: ${response.status}`);
-                    }).catch(() => {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    });
-                }
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                console.log("Data received from API:", data);
-                loadingIndicator.classList.add('hidden');
-
-                if (data && data.length > 0) {
-                    if (chartsContainerDiv) {
-                        chartsContainerDiv.classList.remove('hidden'); // Show charts container
-                    }
-                    displayOverallSentimentChart(data);
-                    displayAspectSentimentChart(data);
-                    displayReviews(data); // This will make reviewsResultDiv visible if it has content
-                    showMessage('Successfully fetched and analyzed reviews!', 'success');
-                } else {
-                    if (chartsContainerDiv) {
-                        chartsContainerDiv.classList.add('hidden');
-                    }
-                    reviewsResultDiv.classList.remove('hidden');
-                    reviewsResultDiv.innerHTML = `<p class="text-amber-400">No reviews were found or analyzed for this product.</p>`;
-                    showMessage('No reviews returned from the server.', 'info');
+                resetUIState();
+                if (!data || (!data.summary && (!data.reviewAnalyses || data.reviewAnalyses.length === 0))) {
+                    showMessage(data.summary || 'No reviews or summary could be generated for this product.', 'info');
+                    return;
                 }
+
+                showMessage('Successfully fetched and analyzed reviews!', 'success');
+                resultsSection.classList.remove('hidden');
+
+                summaryResultDiv.textContent = data.summary || 'AI summary could not be generated.';
+                processAndRenderCharts(data.reviewAnalyses || []);
+                displayReviews(data.reviewAnalyses || []);
             })
             .catch(error => {
+                resetUIState();
                 console.error("Fetch Error:", error);
-                loadingIndicator.classList.add('hidden');
-                if (chartsContainerDiv) {
-                    chartsContainerDiv.classList.add('hidden');
-                }
-                reviewsResultDiv.classList.remove('hidden');
-                reviewsResultDiv.innerHTML = `<p class="text-rose-400">Could not fetch or analyze reviews: ${error.message}</p>`;
-                showMessage('Error: ' + error.message, 'error');
+                showMessage(`An error occurred: ${error.message}. Check console for details.`, 'error');
             });
     });
 
-    function displayOverallSentimentChart(reviewDataList) {
-        const sentimentCounts = {
-            "Very Positive": 0, "Positive": 0, "Neutral": 0, "Negative": 0, "Very Negative": 0
-        };
-        reviewDataList.forEach(item => {
-            if (sentimentCounts.hasOwnProperty(item.overallSentiment)) {
-                sentimentCounts[item.overallSentiment]++;
-            } else { console.warn("Unknown overall sentiment label:", item.overallSentiment); }
-        });
+    function resetUIState() {
+        buttonText.textContent = 'Fetch & Analyze Reviews';
+        loadingIndicator.classList.add('hidden');
+        submitButton.disabled = false;
+    }
 
-        const chartLabels = Object.keys(sentimentCounts).filter(key => sentimentCounts[key] > 0); // Only show sentiments with counts
-        const chartDataValues = chartLabels.map(key => sentimentCounts[key]);
+    function processAndRenderCharts(reviewAnalyses) {
+        const sentimentCounts = { Positive: 0, Neutral: 0, Negative: 0 };
+        const aspectData = {};
 
+        reviewAnalyses.forEach(item => {
+            const sentiment = item.overallSentiment || 'Neutral';
+            sentimentCounts[sentiment] = (sentimentCounts[sentiment] || 0) + 1;
 
-        const canvasElement = document.getElementById('overallSentimentChart');
-        if (!canvasElement) { console.error("overallSentimentChart canvas element not found!"); return; }
-        const ctx = canvasElement.getContext('2d');
-
-        if (overallSentimentChartInstance) { overallSentimentChartInstance.destroy(); }
-
-        if (chartLabels.length === 0) { // Handle no data for pie chart
-            canvasElement.parentElement.innerHTML = '<p class="text-center text-slate-400 py-10">No overall sentiment data to display.</p>';
-            return;
-        }
-
-
-        overallSentimentChartInstance = new Chart(ctx, {
-            type: 'doughnut', // Changed to doughnut for a slightly different look
-            data: {
-                labels: chartLabels,
-                datasets: [{
-                    label: 'Overall Sentiment',
-                    data: chartDataValues,
-                    backgroundColor: [
-                        'rgba(34, 197, 94, 0.8)',  // Very Positive
-                        'rgba(16, 185, 129, 0.8)', // Positive
-                        'rgba(250, 204, 21, 0.8)',  // Neutral
-                        'rgba(239, 68, 68, 0.8)', // Negative
-                        'rgba(220, 38, 38, 0.8)'   // Very Negative
-                    ],
-                    borderColor: '#475569', // slate-600 for border, or make transparent
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { color: '#e2e8f0', boxWidth: 15, padding:15 } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) { label += ': '; }
-                                if (context.parsed !== null) { label += context.parsed; }
-                                const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
-                                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) + '%' : '0%';
-                                label += ` (${percentage})`;
-                                return label;
-                            }
-                        }
-                    }
+            if (item.aspectSentiments) {
+                for (const [aspect, sent] of Object.entries(item.aspectSentiments)) {
+                    if (!aspectData[aspect]) aspectData[aspect] = { Positive: 0, Neutral: 0, Negative: 0 };
+                    aspectData[aspect][sent]++;
                 }
             }
+        });
+
+        renderOverallChart(sentimentCounts);
+        renderAspectChart(aspectData);
+    }
+
+    function renderOverallChart(sentimentCounts) {
+        const ctx = document.getElementById('overallSentimentChart').getContext('2d');
+        overallChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    data: [sentimentCounts.Positive, sentimentCounts.Neutral, sentimentCounts.Negative],
+                    backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
+                    borderColor: '#1e293b',
+                    borderWidth: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
         });
     }
 
-    function displayAspectSentimentChart(reviewDataList) {
-        const aspectSentimentsData = {};
-        const allSentimentLabels = ["Very Positive", "Positive", "Neutral", "Negative", "Very Negative"];
-
-        reviewDataList.forEach(item => {
-            if (item.aspectSentiments) {
-                for (const [aspect, sentiment] of Object.entries(item.aspectSentiments)) {
-                    if (!aspectSentimentsData[aspect]) {
-                        aspectSentimentsData[aspect] = {};
-                        allSentimentLabels.forEach(sLabel => aspectSentimentsData[aspect][sLabel] = 0);
-                    }
-                    if (aspectSentimentsData[aspect].hasOwnProperty(sentiment)) {
-                        aspectSentimentsData[aspect][sentiment]++;
-                    } else { console.warn(`Unknown sentiment '${sentiment}' for aspect '${aspect}'`); }
-                }
-            }
-        });
-
-        const sortedAspects = Object.keys(aspectSentimentsData).sort();
-        const chartLabels = sortedAspects;
-        const datasets = [];
-        const sentimentColors = {
-            "Very Positive": 'rgba(34, 197, 94, 0.8)', "Positive": 'rgba(16, 185, 129, 0.8)',
-            "Neutral": 'rgba(250, 204, 21, 0.8)', "Negative": 'rgba(239, 68, 68, 0.8)',
-            "Very Negative": 'rgba(220, 38, 38, 0.8)'
-        };
-
-        allSentimentLabels.forEach(sentimentLabel => {
-            const dataValues = chartLabels.map(aspect => aspectSentimentsData[aspect][sentimentLabel] || 0);
-            if (dataValues.some(val => val > 0)) {
-                datasets.push({
-                    label: sentimentLabel, data: dataValues,
-                    backgroundColor: sentimentColors[sentimentLabel],
-                    borderColor: sentimentColors[sentimentLabel].replace('0.8', '1'), borderWidth: 1
-                });
-            }
-        });
-
-        const canvasElement = document.getElementById('aspectSentimentChart');
-        if (!canvasElement) { console.error("aspectSentimentChart canvas element not found!"); return; }
-        // Clear previous content in case of "no data" message
-        if (canvasElement.parentElement.firstChild.tagName === 'P') {
-            canvasElement.parentElement.innerHTML = ''; // Clear "no data" message
-            canvasElement.parentElement.appendChild(canvasElement); // Re-add canvas if it was removed (though it shouldn't be)
-        }
-
-
-        if (chartLabels.length === 0 || datasets.length === 0) {
-            console.log("No aspect data to display in chart.");
-            if (canvasElement.parentElement && canvasElement.parentElement.firstChild.tagName !== 'P') { // Avoid adding multiple messages
-                canvasElement.parentElement.innerHTML = '<p class="text-center text-slate-400 py-10">No aspect sentiment data to display.</p>';
-            }
-            if (aspectSentimentChartInstance) { // Ensure instance is cleared
-                aspectSentimentChartInstance.destroy();
-                aspectSentimentChartInstance = null;
-            }
-            return;
-        }
-
-        const ctx = canvasElement.getContext('2d');
-        if (aspectSentimentChartInstance) { aspectSentimentChartInstance.destroy(); }
-
-        aspectSentimentChartInstance = new Chart(ctx, {
+    function renderAspectChart(aspectData) {
+        const ctx = document.getElementById('aspectSentimentChart').getContext('2d');
+        const labels = Object.keys(aspectData);
+        aspectChart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: chartLabels, datasets: datasets },
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Positive', data: labels.map(l => aspectData[l].Positive), backgroundColor: '#22c55e' },
+                    { label: 'Neutral', data: labels.map(l => aspectData[l].Neutral), backgroundColor: '#facc15' },
+                    { label: 'Negative', data: labels.map(l => aspectData[l].Negative), backgroundColor: '#ef4444' }
+                ]
+            },
             options: {
-                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false,
                 scales: {
                     x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
                     y: { stacked: true, ticks: { color: '#cbd5e1' }, grid: { display: false } }
                 },
-                plugins: {
-                    legend: { position: 'top', labels: { color: '#e2e8f0', boxWidth:15, padding:15 } },
-                    tooltip: { mode: 'index', intersect: false }
-                }
+                plugins: { legend: { position: 'top', labels: { color: '#cbd5e1' } } }
             }
         });
     }
 
-    function displayReviews(reviewDataList) {
-        if (reviewDataList.length === 0) {
-            reviewsResultDiv.innerHTML = ''; // Clear if it was previously shown with no data message
-            reviewsResultDiv.classList.add('hidden');
-            return;
+    function displayReviews(reviewAnalyses) {
+        if (!reviewAnalyses || reviewAnalyses.length === 0) {
+            reviewsResultDiv.innerHTML = ''; return;
         }
-        reviewsResultDiv.classList.remove('hidden');
-        reviewsResultDiv.classList.add('fade-in');
-        let reviewsHTML = `<h2 class="text-xl font-semibold text-sky-400 mb-4 mt-6">Individual Review Details (${reviewDataList.length})</h2>
+        let reviewsHTML = `<h3 class="text-xl font-semibold text-sky-400 mb-4 mt-6">Individual Review Details (${reviewAnalyses.length})</h3>
                            <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2">`;
-        reviewDataList.forEach((item, index) => {
+        reviewAnalyses.forEach((item, index) => {
             reviewsHTML += `
-                <div class="p-3 bg-slate-600/70 rounded-md shadow">
-                    <p class="text-slate-300 text-xs mb-2 line-clamp-3 hover:line-clamp-none transition-all duration-300 ease-in-out cursor-pointer" title="Click to expand/collapse"><strong>Review ${index + 1}:</strong> ${escapeHTML(item.reviewText)}</p>
-                    <p class="text-xs mb-1"><strong>Overall Sentiment:</strong> <strong class="${getSentimentColor(item.overallSentiment)}">${escapeHTML(item.overallSentiment)}</strong></p>
-                    <strong class="text-xs text-slate-400">Aspects:</strong>
-                    <ul class="list-disc list-inside pl-2 text-xs">`;
+                <div class="p-3 bg-slate-700/80 rounded-md shadow">
+                    <p class="text-slate-300 text-xs mb-2 line-clamp-3 hover:line-clamp-none transition-all duration-300 ease-in-out cursor-pointer" title="Click to expand/collapse">
+                        <strong>Review #${index + 1}:</strong> ${escapeHTML(item.reviewText)}
+                    </p>
+                    <div class="text-xs border-t border-slate-600 pt-2 mt-2">
+                        <strong class="text-slate-400">Aspects:</strong>
+                        <ul class="list-disc list-inside pl-2 text-xs">`;
             if (item.aspectSentiments && Object.keys(item.aspectSentiments).length > 0) {
                 for (const [aspect, sentiment] of Object.entries(item.aspectSentiments)) {
                     reviewsHTML += `<li>${escapeHTML(aspect)}: <span class="${getSentimentColor(sentiment)}">${escapeHTML(sentiment)}</span></li>`;
@@ -353,47 +215,41 @@
             } else {
                 reviewsHTML += `<li>No specific aspects detected.</li>`;
             }
-            reviewsHTML += `</ul></div>`;
+            reviewsHTML += `</ul></div></div>`;
         });
         reviewsHTML += `</div>`;
         reviewsResultDiv.innerHTML = reviewsHTML;
 
         reviewsResultDiv.querySelectorAll('p[title="Click to expand/collapse"]').forEach(p => {
-            p.addEventListener('click', () => {
-                p.classList.toggle('line-clamp-3');
-                p.classList.toggle('line-clamp-none');
-            });
+            p.addEventListener('click', (e) => e.target.classList.toggle('line-clamp-3'));
         });
-    }
-
-    function escapeHTML(str) {
-        if (str === null || str === undefined) return '';
-        return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
     function getSentimentColor(sentiment) {
         if (!sentiment) return 'text-slate-300';
         const s = sentiment.toLowerCase();
-        if (s.includes('very positive')) return 'text-green-400';
-        if (s.includes('positive')) return 'text-green-500';
-        if (s.includes('neutral')) return 'text-yellow-400';
-        if (s.includes('negative')) return 'text-red-500';
-        if (s.includes('very negative')) return 'text-red-400';
+        if (s.includes('positive')) return 'text-green-400 font-semibold';
+        if (s.includes('neutral')) return 'text-yellow-400 font-semibold';
+        if (s.includes('negative')) return 'text-red-400 font-semibold';
         return 'text-slate-300';
     }
 
-    function showMessage(message, type = 'info') {
+    function showMessage(message, type, hide = false) {
         messageBox.textContent = message;
-        messageBox.classList.remove('hidden', 'bg-red-500/20', 'text-red-300', 'bg-green-500/20', 'text-green-300', 'bg-sky-500/20', 'text-sky-300');
+        messageBox.className = 'mt-6 p-3 rounded-lg text-sm text-center';
+        if (hide) { messageBox.classList.add('hidden'); return; }
         messageBox.classList.add('fade-in');
-        if (type === 'error') messageBox.classList.add('bg-red-500/20', 'text-red-300');
-        else if (type === 'success') messageBox.classList.add('bg-green-500/20', 'text-green-300');
-        else messageBox.classList.add('bg-sky-500/20', 'text-sky-300');
+        const colorClasses = {
+            error: ['bg-red-500/20', 'text-red-300'],
+            success: ['bg-green-500/20', 'text-green-300'],
+            info: ['bg-sky-500/20', 'text-sky-300']
+        };
+        messageBox.classList.add(...(colorClasses[type] || colorClasses.info));
     }
 
-    function hideMessage() {
-        messageBox.classList.add('hidden');
-        messageBox.classList.remove('fade-in');
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 </script>
 

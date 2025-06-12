@@ -1,91 +1,88 @@
+// In file: ReviewRestController.java
 package com.krish.project.Sentiment.Analysis.Controller;
 
-import com.krish.project.Sentiment.Analysis.Model.FlipkartReviewScraper;
-import com.krish.project.Sentiment.Analysis.Model.ReviewAnalysisResult;
-import com.krish.project.Sentiment.Analysis.Model.AmazonReviewScraper;
-import com.krish.project.Sentiment.Analysis.Model.SentimentAnalyzer;
-import org.checkerframework.checker.units.qual.A;
+import com.krish.project.Sentiment.Analysis.Model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "*")
 public class ReviewRestController {
 
-    @Autowired
     private final SentimentAnalyzer sentimentAnalyzer;
-    private final AmazonReviewScraper amazonReviewScraper;
-    private final FlipkartReviewScraper flipkartReviewScraper;
+    private final AmazonReviewScraper amazonScraper;
+    private final FlipkartReviewScraper flipkartScraper;
+    private final ReviewSummarizer reviewSummarizer;
 
-    public ReviewRestController(SentimentAnalyzer sentimentAnalyzer, AmazonReviewScraper amazonReviewScraper, FlipkartReviewScraper flipkartReviewScraper){
+    @Autowired
+    public ReviewRestController(
+            SentimentAnalyzer sentimentAnalyzer,
+            AmazonReviewScraper amazonScraper,
+            FlipkartReviewScraper flipkartScraper,
+            ReviewSummarizer reviewSummarizer
+    ){
         this.sentimentAnalyzer = sentimentAnalyzer;
-        this.amazonReviewScraper = amazonReviewScraper;
-        this.flipkartReviewScraper = flipkartReviewScraper;
+        this.amazonScraper = amazonScraper;
+        this.flipkartScraper = flipkartScraper;
+        this.reviewSummarizer = reviewSummarizer;
     }
 
-    @CrossOrigin(origins = "*")
-    @PostMapping("/aspect-review")
-    public Map<String, String> analyzeAspects(@RequestBody String review) {
-        return sentimentAnalyzer.analyzeAspects(review);
-    }
-
-    @CrossOrigin(origins = "*")
     @GetMapping("/scrape")
-    public ResponseEntity<List<ReviewAnalysisResult>> scrapeAndAnalyze(@RequestParam String url) {
-        List<ReviewAnalysisResult> results = new ArrayList<>();
+    public ResponseEntity<ScrapeAndAnalyzeResponse> scrapeAndAnalyze(@RequestParam String url) {
+        ScrapeAndAnalyzeResponse compositeResponse = new ScrapeAndAnalyzeResponse();
+        List<ReviewAnalysisResult> analysisResults = new ArrayList<>();
+
         try {
             System.out.println("Attempting to scrape reviews from: " + url);
-            if (url.contains("flipkart")) {
-                List<String> reviews = flipkartReviewScraper.scrapeReviews(url);
+            List<String> reviews;
 
-                if (reviews.isEmpty()) {
-                    System.out.println("No reviews scarpped for : " + url);
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
-                }
-
-                return getListResponseEntity(results, reviews);
-
-            } try {
-                List<String> reviews = amazonReviewScraper.scrapeReviews(url);
-
-                if (reviews.isEmpty()) {
-                    System.out.println("No reviews scraped for: " + url);
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
-                }
-
-                return getListResponseEntity(results, reviews);
-            } catch(Exception e){
-                System.err.println("Error in /scrape endpoint: " + e.getMessage());
-                e.printStackTrace();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            if (url.toLowerCase().contains("flipkart.com")) {
+                System.out.println("Flipkart URL detected. Using FlipkartReviewScraper.");
+                reviews = flipkartScraper.scrapeReviews(url);
+            } else if (url.toLowerCase().contains("amazon.")) {
+                System.out.println("Amazon URL detected. Using AmazonReviewScraper.");
+                reviews = amazonScraper.scrapeReviews(url);
+            } else {
+                compositeResponse.setSummary("Unsupported URL. Please use a valid Amazon or Flipkart product URL.");
+                return ResponseEntity.badRequest().body(compositeResponse);
             }
-        } catch (Exception f)
 
-    {
-        System.out.println("Error in /scrape endpoint: " + f.getMessage());
-        f.printStackTrace();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-    }    }
+            if (reviews == null || reviews.isEmpty()) {
+                System.out.println("No reviews were scraped for the URL: " + url);
+                compositeResponse.setSummary("Could not find any reviews for this product on the page.");
+                return ResponseEntity.ok(compositeResponse);
+            }
 
-    private ResponseEntity<List<ReviewAnalysisResult>> getListResponseEntity(List<ReviewAnalysisResult> results, List<String> reviews) {
-        for (String review : reviews) {
-            String overall = sentimentAnalyzer.getOverallSentiment(review);
-            Map<String, String> aspect = sentimentAnalyzer.analyzeAspects(review);
+            // 1. Generate the AI summary
+            String summary = reviewSummarizer.summarizeReviews(reviews);
+            compositeResponse.setSummary(summary);
 
-            ReviewAnalysisResult analysisResult = new ReviewAnalysisResult();
+            // 2. Analyze individual reviews for aspects
+            for (String review : reviews) {
+                String overall = sentimentAnalyzer.getOverallSentiment(review);
+                Map<String, String> aspects = sentimentAnalyzer.analyzeAspects(review);
 
-            analysisResult.setReviewText(review);
-            analysisResult.setOverallSentiment(overall);
-            analysisResult.setAspectSentiments(aspect);
-            results.add(analysisResult);
+                ReviewAnalysisResult analysis = new ReviewAnalysisResult();
+                analysis.setReviewText(review);
+                analysis.setOverallSentiment(overall);
+                analysis.setAspectSentiments(aspects);
+                analysisResults.add(analysis);
+            }
+
+            compositeResponse.setReviewAnalyses(analysisResults);
+            return ResponseEntity.ok(compositeResponse);
+
+        } catch (Exception e) {
+            System.err.println("Error in /scrape endpoint: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        return ResponseEntity.ok(results);
     }
 }
